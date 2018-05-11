@@ -78,7 +78,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\VndbSharp\VndbSharp.csproj">
+    <ProjectReference Include="..\..\src\VndbSharp\VndbSharp.csproj">
       <Project>{10cde9ca-fd44-4e0f-820e-805c67aa9e95}</Project>
       <Name>VndbSharp</Name>
     </ProjectReference>

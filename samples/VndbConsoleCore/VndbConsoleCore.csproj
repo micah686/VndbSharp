@@ -18,6 +18,6 @@
     <PackageReference Include="System.Security.SecureString" Version="4.3.0" Condition="$(DefineConstants.Contains(UserAuth))" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\VndbSharp\VndbSharp.csproj" />
+    <ProjectReference Include="..\..\src\VndbSharp\VndbSharp.csproj" />
   </ItemGroup>
 </Project>
