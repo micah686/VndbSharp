@@ -22,7 +22,7 @@ bld/
 [Oo]bj/
 [Ll]og/
 
-!VndbSharp/Models/*
+!src/VndbSharp/Models/*
 
 # Visual Studio 2015 cache/options directory
 .vs/
