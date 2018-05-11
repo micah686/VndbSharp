@@ -31,4 +31,7 @@
 			<Reference Include="System.Net.Http" />
 			<Reference Include="Microsoft.CSharp" />
 	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\VndbSharp.Common\VndbSharp.Common.csproj" />
+	</ItemGroup>
 </Project>

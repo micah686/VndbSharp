@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using VndbSharp.Attributes;
-using VndbSharp.Json;
 using VndbSharp.Json.Converters;
 using VndbSharp.Models;
 using VndbSharp.Models.Common;
@@ -39,7 +37,7 @@ namespace VndbSharp
 
 		static VndbUtils()
 		{
-			VndbUtils._httpClientHandlerCallback = () => Task.FromResult((HttpMessageHandler) new HttpClientHandler());
+			VndbUtils._httpClientHandlerCallback = () => Task.FromResult((HttpMessageHandler)new HttpClientHandler());
 		}
 
 		/// <summary>
@@ -87,7 +85,7 @@ namespace VndbSharp
 					fullFlags = VndbFlags.FullWishlist;
 					break;
 				case Constants.GetStaffCommand:
-				    fullFlags = VndbFlags.FullStaff;
+					fullFlags = VndbFlags.FullStaff;
 					break;
 				default:
 					throw new ArgumentOutOfRangeException(nameof(method));
@@ -121,7 +119,7 @@ namespace VndbSharp
 		/// <exception cref="HttpRequestException">Occurs when the votes.gz file returns a non-success status</exception>
 		public static async Task<IEnumerable<Vote>> GetVotesDumpAsync(VoteDumpVersion version = VoteDumpVersion.Two)
 			=> await VndbUtils.GetAndParseVotesAsync(version).ConfigureAwait(false);
-		
+
 		internal static IEnumerable<String> ConvertFlagsToString(String method, VndbFlags flags)
 		{
 			var type = typeof(VndbFlags);
@@ -137,8 +135,8 @@ namespace VndbSharp
 				if (identity == null)
 					continue;
 
-				if ((method == Constants.GetStaffCommand || method == Constants.GetCharacterCommand) && 
-					(VndbFlags) value == VndbFlags.VisualNovels)
+				if ((method == Constants.GetStaffCommand || method == Constants.GetCharacterCommand) &&
+					(VndbFlags)value == VndbFlags.VisualNovels)
 					yield return $"{identity.Identity}s"; // Ugly hack to work around *two* vn(s) flags
 				else yield return identity.Identity;
 			}
@@ -186,26 +184,26 @@ namespace VndbSharp
 
 			var results = new List<Vote>();
 
-			var votes = rawContents.Split(new[] {'\n'}, StringSplitOptions.RemoveEmptyEntries);
+			var votes = rawContents.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
 			var expectedValues = version == VoteDumpVersion.One ? 3 : 4;
 
 			// Resharper "Loop can be converted to LINQ-expression won't work due to inline "out var" declaration
 			foreach (var vote in votes)
 			{
-				var values = vote.Split(new [] {' '}, expectedValues, StringSplitOptions.RemoveEmptyEntries);
+				var values = vote.Split(new[] { ' ' }, expectedValues, StringSplitOptions.RemoveEmptyEntries);
 
 				if (values.Length != expectedValues)
 					continue;
 
 				SimpleDate date = null;
 
-				if (!UInt32.TryParse(values[0], out var vnId) || 
-					!UInt32.TryParse(values[1], out var uid) || 
+				if (!UInt32.TryParse(values[0], out var vnId) ||
+					!UInt32.TryParse(values[1], out var uid) ||
 					!Byte.TryParse(values[2], out var value))
 					continue;
 
-				if (version == VoteDumpVersion.Two && 
-					(date = (SimpleDate) SimpleDateConverter.ParseString(values[3])) == null)
+				if (version == VoteDumpVersion.Two &&
+					(date = (SimpleDate)SimpleDateConverter.ParseString(values[3])) == null)
 					continue;
 
 				results.Add(new Vote(version, vnId, uid, value, date));

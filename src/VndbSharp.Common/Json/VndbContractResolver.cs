@@ -15,7 +15,7 @@ using VndbSharp.Models.Staff;
 using VndbSharp.Models.VisualNovel;
 using CharacterVisualNovelMetadata = VndbSharp.Models.Character.VisualNovelMetadata;
 
-namespace VndbSharp.Json
+namespace VndbSharp
 {
 	internal class VndbContractResolver : DefaultContractResolver
 	{

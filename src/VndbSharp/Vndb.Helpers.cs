@@ -413,10 +413,10 @@ namespace VndbSharp
 
 #if UserAuth
 			// Create a login class that can have an optional Username / Password
-			var login = new Login(this.Username, this.Password);
+			var login = new Login(VndbUtils.ClientName, VndbUtils.ClientVersion, this.Username, this.Password);
 #else
 			// Create a login that doesn't allow usernames / passwords
-			var login = new Login();
+			var login = new Login(VndbUtils.ClientName, VndbUtils.ClientVersion);
 #endif
 			await this.SendDataAsync(this.FormatRequest(Constants.LoginCommand, login, false), this.CancellationTokenSource.Token)
 				.TimeoutAfter(this.SendTimeout)

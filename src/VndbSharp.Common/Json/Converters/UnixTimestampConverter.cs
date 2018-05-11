@@ -16,9 +16,9 @@ namespace VndbSharp.Json.Converters
 				return null;
 			return UnixTimestampConverter._epoch.AddSeconds((Int64) reader.Value);
 		}
-
+		
 		public override Boolean CanConvert(Type objectType)
-			=> objectType == typeof(VndbUtils);
+			=> objectType == typeof(DateTime);
 
 		private static readonly DateTime _epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 	}

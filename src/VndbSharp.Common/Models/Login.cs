@@ -8,14 +8,14 @@ namespace VndbSharp.Models
 {
 	internal class Login
 	{
-		public Login()
+		public Login(String clientName, String clientVersion)
 		{
-			this.ClientName = VndbUtils.ClientName;
-			this.ClientVersion = VndbUtils.ClientVersion;
+			this.ClientName = clientName;
+			this.ClientVersion = clientVersion;
 		}
 
 #if UserAuth
-		public Login(String username, SecureString password)
+		public Login(String clientName, String clientVersion, String username, SecureString password)
 			: this()
 		{
 			this.Username = username;
