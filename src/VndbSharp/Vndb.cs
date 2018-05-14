@@ -1,15 +1,10 @@
 ﻿using System;
-using System.IO;
-using System.Net.Sockets;
 #if UserAuth
 using System.Security;
 #endif
-using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using VndbSharp.ConnectionPool;
-using VndbSharp.Extensions;
-using VndbSharp.Interfaces;
 using VndbSharp.Models;
 
 namespace VndbSharp
@@ -67,71 +62,78 @@ namespace VndbSharp
 				return crap.ToString();
 			}
 		}
+		#region .  Fluent Client Settings  .
+
+		/// <summary>
+		///		A helper method to set the Client Name and Client Version sent to the Vndb Api
+		/// </summary>
+		/// <param name="clientName">The name of your client</param>
+		/// <param name="clientVersion">The version of your client</param>
+		/// <returns>The <see cref="Vndb"/> instance</returns>
+		public Vndb WithClientDetails(String clientName, Version clientVersion)
+			=> this.WithClientDetails(clientName, clientVersion.ToString());
+
+		/// <summary>
+		///		A helper method to set the Client Name and Client Version sent to the Vndb Api
+		/// </summary>
+		/// <param name="clientName">The name of your client</param>
+		/// <param name="clientVersion">The version of your client. Valid values: a-z 0-9 _ . / -</param>
+		/// <returns>The <see cref="Vndb"/> instance</returns>
+		/// <exception cref="ArgumentOutOfRangeException">When <paramref name="clientVersion"/> is not a valid <see cref="Version"/></exception>
+		public Vndb WithClientDetails(String clientName, String clientVersion)
+		{
+			VndbUtils.ClientName = clientName;
+			VndbUtils.ClientVersion = clientVersion;
+			return this;
+		}
+
+		/// <summary>
+		///		Sets whether <see cref="VndbFlags"/> should be checked before being sent
+		/// </summary>
+		/// <param name="checkFlags">Should <see cref="VndbFlags"/> be checked before being sent</param>
+		/// <returns>The <see cref="Vndb"/> instance</returns>
+		public Vndb WithFlagsCheck(Boolean checkFlags)
+			=> this.WithFlagsCheck(checkFlags, null);
+
+		/// <summary>
+		///		Sets whether <see cref="VndbFlags"/> should be checked before being sent, and provides a callback to retrieve the invalid flags
+		/// </summary>
+		/// <param name="checkFlags">Should <see cref="VndbFlags"/> be checked before being sent</param>
+		/// <param name="invalidCallback">A callback with which the Method, Provided Flags, and Invalid Flags will be passed to when the Flags are Invalid</param>
+		/// <returns>The <see cref="Vndb"/> instance</returns>
+		public Vndb WithFlagsCheck(Boolean checkFlags, Action<String, VndbFlags, VndbFlags> invalidCallback)
+		{
+			this.CheckFlags = checkFlags;
+			this._invalidFlags = invalidCallback;
+			return this;
+		}
+
+		[Obsolete("Values are unused")]
+		public Vndb WithBufferSize(Int32 both)
+			=> this.WithBufferSize(both, both);
+
+		[Obsolete("Values are unused")]
+		public Vndb WithBufferSize(Int32 receive, Int32 send)
+		{
+//			this.ReceiveBufferSize = receive;
+//			this.SendBufferSize = send;
+			return this;
+		}
+
+		#endregion
 
 		#region .  Public Properties  .
-
-		/// <inheritdoc cref="TcpClient.SendBufferSize"/>
-		public Int32 SendBufferSize
-		{
-			get { return this.Client?.SendBufferSize ?? this._sendBufferSize; }
-			set
-			{
-				if (this.Client != null)
-					this.Client.SendBufferSize = value;
-				this._sendBufferSize = value;
-			}
-		}
-
-		/// <inheritdoc cref="TcpClient.ReceiveBufferSize"/>
-		public Int32 ReceiveBufferSize
-		{
-			get { return this.Client?.ReceiveBufferSize ?? this._receiveBufferSize; }
-			set
-			{
-				if (this.Client != null)
-					this.Client.ReceiveBufferSize = value;
-				this._sendBufferSize = value;
-			}
-		}
-
-		/// <inheritdoc cref="TcpClient.SendTimeout"/>
-		public TimeSpan SendTimeout
-		{
-			get { return this._sendTimeout; }
-			set
-			{
-				if (this.Client != null)
-					this.Client.SendTimeout = (Int32) value.TotalMilliseconds;
-				this._sendTimeout = value;
-			}
-		}
-
-		/// <inheritdoc cref="TcpClient.ReceiveTimeout"/>
-		public TimeSpan ReceiveTimeout
-		{
-			get { return this._receiveTimeout; }
-			set
-			{
-				if (this.Client != null)
-					this.Client.ReceiveTimeout = (Int32) value.TotalMilliseconds;
-				this._receiveTimeout = value;
-			}
-		}
 
 		/// <summary>
 		///		Should the Connection to the Vndb API be done over a secure stream
 		/// </summary>
-		/// <exception cref="InvalidOperationException">When trying to change UseTls while logged in.</exception>
 		public Boolean UseTls
 		{
-			get { return this._useTls; }
+			get => this._useTls;
 			set
 			{
-				//				if (!this.Username.IsEmpty() || this.Password != null)
-				//					throw new InvalidOperationException($"Cannont change {nameof(this.UseTls)} state while using a username / password.");
-
 				this._useTls = value;
-				this.LoggedIn = false;
+				VndbConnectionPool.Instance.Dispose(); // Will renew the connections
 			}
 		}
 
@@ -140,75 +142,11 @@ namespace VndbSharp
 		/// </summary>
 		public Boolean CheckFlags { get; set; } = true;
 
-#if UserAuth
-		/// <summary>
-		///		Indicates if a User is Logged in or not
-		/// </summary>
-		public Boolean IsUserAuthenticated => this.Password != null && this.Stream != null;
-#endif
-
-		#endregion
-
-		#region .  Protected Fields  .
-
-		/// <summary>
-		///		Indicates if the instance has logged in yet or not
-		/// </summary>
-		protected Boolean LoggedIn;
-
-		/// <summary>
-		///		The <see cref="CancellationToken"/> Source for all Async Tasks.
-		/// </summary>
-		protected CancellationTokenSource CancellationTokenSource;
-
-		/// <summary>
-		///		The last error that occured will be stored here until another command is sent
-		/// </summary>
-		protected IVndbError LastError;
-
-		//		/// <summary>
-		//		///		The users password, if provided
-		//		/// </summary>
-		//		protected SecureString Password;
-
-		/// <summary>
-		///		The Connections Stream, for Reading and Writing
-		/// </summary>
-		protected Stream Stream;
-
-		/// <summary>
-		///		The raw json of the last error.
-		/// </summary>
-		protected String LastErrorJson;
-
-		#if UserAuth
-		/// <summary>
-		///		The users username, if provided
-		/// </summary>
-		protected String Username;
-
-		/// <summary>
-		///		The users password, as a secure string
-		/// </summary>
-		protected SecureString Password;
-		#endif
-
-		/// <summary>
-		///		The Connections Client
-		/// </summary>
-		protected TcpClient Client;
-
 		#endregion
 
 		#region .  Backing Fields  .
 
 		private Boolean _useTls = false;
-
-		private Int32 _sendBufferSize = 4096;
-		private Int32 _receiveBufferSize = 4096;
-
-		private TimeSpan _sendTimeout = TimeSpan.FromSeconds(30);
-		private TimeSpan _receiveTimeout = TimeSpan.FromSeconds(30);
 
 		private Action<String, VndbFlags, VndbFlags> _invalidFlags;
 
