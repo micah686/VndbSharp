@@ -15,7 +15,6 @@ namespace VndbSharp.ConnectionPool
 	{
 		private AsyncCollection<VndbConnection> _connectionPool;
 		private Boolean _initialized = false;
-		private UInt32 _activeWorkers = 5;
 
 		/// <summary>
 		///	Exposed singleton of the <see cref="VndbConnectionPool"/> class.

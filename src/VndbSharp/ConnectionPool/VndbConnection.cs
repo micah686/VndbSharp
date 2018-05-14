@@ -33,7 +33,12 @@ namespace VndbSharp.ConnectionPool
 		private Int32 _sendBufferSize = 4096; // Make optional?
 		private Int32 _receiveBufferSize = 4096; // Make optional?
 
-		public Boolean IsWorking { get; private set; } = false;
+#if UserAuth
+		/// <summary>
+		///		Indicates if a User is Logged in or not
+		/// </summary>
+		public Boolean IsUserAuthenticated => this._password != null && this._loggedIn && this._stream != null;
+#endif
 
 		public VndbConnection(Boolean useTls)
 		{
@@ -41,45 +46,82 @@ namespace VndbSharp.ConnectionPool
 		}
 
 #if UserAuth
+		[Obsolete("SecureString is not secure on non-Windows OSes when using .Net Core, or at all in Mono.\n" +
+				  "By Removing this attribute, you acknowledge the risks and will not make PRs or Issues " +
+				  "regarding this unless the situation in .Net Core / Mono changes.", true)]
 		public VndbConnection(String username, SecureString password)
 		{
+#warning SecureString is not secure on non-Windows OSes when using .Net Core, or at all in Mono. By removing the ObsoleteAttribute on this constructor, and/or this warning, you acknowledge the risks and will not make PRs or Issues regarding this unless the situation in .Net Core / Mono changes.
 			this._useTls = true;
 			this._username = username;
 			this._password = password;
+			this._password.MakeReadOnly();
 		}
 #endif
 
-		public async Task<OneOf<T, IVndbError>> SendRequestAsync<T>(Byte[] requestData)
-			where T : class
+		public async Task<OneOf<TResult, IVndbError>> SendGetRequestAsync<TResult, TData>(String prefix, TData data = null, Boolean includeNull = true)
+			where TResult : class
+			where TData : class
 		{
-			this.IsWorking = true;
 			try
 			{
 				var isLoggedIn = await this.LoginAsync().ConfigureAwait(false);
-				if (!isLoggedIn.IsT0)
-					return OneOf<T, IVndbError>.FromT1(isLoggedIn.AsT1);
+				if (isLoggedIn.IsT1)
+					return OneOf<TResult, IVndbError>.FromT1(isLoggedIn.AsT1);
 
-#if DEBUG
-				Debug.WriteLine(this.GetString(requestData));
-#endif
+				var command = this.FormatCommand(prefix, data, includeNull);
+				var requestData = this.FormatRequest(command);
+
+				Debug.WriteLine($"Get Request | {command}");
 				await this.SendDataAsync(requestData).ConfigureAwait(false);
 				var response = await this.ReceiveDataAsync().ConfigureAwait(false);
-
 				Debug.WriteLine($"Get Response | {response}");
 
 				var results = response.ToVndbResults();
 				if (results.Length == 2 &&
-				    (results[0] == Constants.Results || results[0] == Constants.DbStats))
-					return results[1].FromJson<T>();
+					(results[0] == Constants.Results || results[0] == Constants.DbStats))
+					return results[1].FromJson<TResult>();
 
 				if (results.Length != 2 || results[0] != Constants.Error)
 					throw new UnexpectedResponseException(this.GetString(requestData), response);
 
-				return OneOf<T, IVndbError>.FromT1(this.ParseError(results[1]));
+				return OneOf<TResult, IVndbError>.FromT1(this.ParseError(results[1]));
 			}
 			finally
 			{
-				this.IsWorking = false;
+				VndbConnectionPool.Instance.ReturnConnection(this);
+			}
+		}
+
+		public async Task<OneOf<Boolean, IVndbError>> SendSetRequestAsync<T>(String method, UInt32 id, T data,
+			Boolean includeNull = false)
+		{
+			try
+			{
+				var isLoggedIn = await this.LoginAsync().ConfigureAwait(false);
+				if (isLoggedIn.IsT1)
+					return OneOf<Boolean, IVndbError>.FromT1(isLoggedIn.AsT1);
+
+				var command = this.FormatCommand($"{method} {id}", data, includeNull);
+				var requestData = this.FormatRequest(command);
+
+				Debug.WriteLine($"Set Request | {command}");
+				await this.SendDataAsync(requestData).ConfigureAwait(false);
+				var response = await this.ReceiveDataAsync().ConfigureAwait(false);
+				Debug.WriteLine($"Set Response | {response}");
+
+				var results = response.ToVndbResults();
+				if (results.Length == 2 &&
+				    (results[0] == Constants.Ok))
+					return true;
+
+				if (results.Length != 2 || results[0] != Constants.Error)
+					throw new UnexpectedResponseException(this.GetString(requestData), response);
+
+				return OneOf<Boolean, IVndbError>.FromT1(this.ParseError(results[1]));
+			}
+			finally
+			{
 				VndbConnectionPool.Instance.ReturnConnection(this);
 			}
 		}
@@ -111,9 +153,10 @@ namespace VndbSharp.ConnectionPool
 			var login = new Login(VndbUtils.ClientName, VndbUtils.ClientVersion);
 #endif
 
-			await this.SendDataAsync(this.FormatRequest(Constants.LoginCommand, login, false))
-				.ConfigureAwait(false);
+			var command = this.FormatCommand(Constants.LoginCommand, login, false);
+			var requestData = this.FormatRequest(command);
 
+			await this.SendDataAsync(requestData).ConfigureAwait(false);
 			var response = await this.ReceiveDataAsync().ConfigureAwait(false);
 
 			if (response == Constants.Ok)
@@ -168,10 +211,10 @@ namespace VndbSharp.ConnectionPool
 			this._loggedIn = false;
 		}
 
-		private Byte[] FormatRequest<T>(String prefix, T data, Boolean includeNull = true)
+		private String FormatCommand<T>(String prefix, T data, Boolean includeNull)
 		{
 			if (data == null && !includeNull)
-				return this.FormatRequest(prefix);
+				return prefix;
 
 			var json = JsonConvert.SerializeObject(data,
 				new JsonSerializerSettings
@@ -182,7 +225,7 @@ namespace VndbSharp.ConnectionPool
 						: NullValueHandling.Ignore,
 				});
 
-			return this.FormatRequest(json == "null" ? prefix : $"{prefix} {json}");
+			return json == "null" ? prefix : $"{prefix} {json}";
 		}
 
 		private Byte[] GetBytes(String data)
@@ -260,6 +303,10 @@ namespace VndbSharp.ConnectionPool
 
 			this._stream?.Dispose();
 			this._stream = null;
+
+#if UserAuth
+			this.Password?.Dispose();
+#endif
 		}
 
 		#endregion
