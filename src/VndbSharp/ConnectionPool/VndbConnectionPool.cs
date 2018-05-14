@@ -75,7 +75,6 @@ namespace VndbSharp.ConnectionPool
 
 		/// <summary>
 		///		<para>Disposes <see cref="VndbConnectionPool"/> by disposing all of the internal <see cref="VndbConnection"/></para>
-		///		<para>This generally should only be called when you're finished with the Vndb API</para>
 		/// </summary>
 		public void Dispose()
 		{
