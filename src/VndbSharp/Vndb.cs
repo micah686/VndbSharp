@@ -6,6 +6,8 @@ using System.Security;
 #endif
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using VndbSharp.ConnectionPool;
 using VndbSharp.Extensions;
 using VndbSharp.Interfaces;
 using VndbSharp.Models;
@@ -51,16 +53,14 @@ namespace VndbSharp
 		{
 			try
 			{
-				if (!await this.LoginAsync().ConfigureAwait(false))
-					return this.GetLastErrorJson();
+				VndbConnectionPool.Instance.Initialize(true);
+				var connection = await VndbConnectionPool.Instance.GetConnectionAsync().ConfigureAwait(false);
+				var isLoggedIn = await connection.LoginAsync().ConfigureAwait(false);
+				if (isLoggedIn.IsT1)
+					return JsonConvert.SerializeObject(isLoggedIn.AsT1);
 
-				this.RenewCts();
-				await this.SendDataAsync(this.FormatRequest(command), this.CancellationTokenSource.Token)
-					.TimeoutAfter(this.SendTimeout)
-					.ConfigureAwait(false);
-				return await this.GetResponseAsync(this.CancellationTokenSource.Token)
-					.TimeoutAfter(this.ReceiveTimeout)
-					.ConfigureAwait(false);
+				await connection.SendDataAsync(connection.FormatRequest(command)).ConfigureAwait(false);
+				return await connection.ReceiveDataAsync().ConfigureAwait(false);
 			}
 			catch (Exception crap)
 			{
