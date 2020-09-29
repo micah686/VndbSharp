@@ -28,21 +28,22 @@ jobs:
         dotnet-version: 2.2.109
     - name: dotnet build
       run: |
-        dotnet build VndbSharp/VndbSharp.csproj -c Release -o --output nuget-packages --no-build
-        dir ./VndbSharp/nuget-packages
+        mkdir ${{ github.workspace }}/build
+        dotnet build VndbSharp/VndbSharp.csproj -c Release -o --output ${{ github.workspace }}/build
+        dir ${{ github.workspace }}/build
     - name: Install NuGet client
       uses: warrenbuckley/Setup-Nuget@v1
 
     - name: Push with dotnet
-      run: dotnet nuget push ./VndbSharp/nuget-packages/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+      run: dotnet nuget push .${{ github.workspace }}/build/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
    
     - name: Push with dotnet2
-      run: dotnet nuget push ./VndbSharp/nuget-packages/*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json 
+      run: dotnet nuget push ${{ github.workspace }}/build/*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json 
 
     - name: Push with nuget
       run: |
         nuget ${{secrets.NUGET_API_KEY}}
-        nuget push ./VndbSharp/nuget-packages/*.nupkg -Source https://api.nuget.org/v3/index.json
+        nuget push ${{ github.workspace }}/build/*.nupkg -Source https://api.nuget.org/v3/index.json
       
     - name: Publish to NuGet
       uses: brandedoutcast/publish-nuget@v2
