@@ -5,47 +5,29 @@ on:
     branches: [ gha ]
   pull_request:
     branches: [ gha ]
-  
-env:
-  PROJECT_NAME: VndbSharp
-  GITHUB_FEED: https://nuget.pkg.github.com/micah686/index.json
-  GITHUB_USER: micah686
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NUGET_FEED: https://api.nuget.org/v3/index.json
-  NUGET_KEY: ${{secrets.NUGET_API_KEY}}
 
 jobs:
-  build:
+  publish:
+    name: build, pack & publish
     runs-on: windows-latest
     steps:
+      - uses: actions/checkout@v2
 
-    - uses: actions/checkout@v1
+      # - name: Setup dotnet
+      #   uses: actions/setup-dotnet@v1
+      #   with:
+      #     dotnet-version: 3.1.200
 
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 2.2.109
-    - name: dotnet build
-      run: |
-        cd .\VndbSharp
-        dir
-        dotnet build --configuration Release
-
-    - name: Install NuGet client
-      uses: warrenbuckley/Setup-Nuget@v1
-
-    - name: Add private GitHub registry to NuGet
-      run: nuget sources add -name "GPR" -Source https://nuget.pkg.github.com/micah686/index.json -Username micah686 -Password ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Pack
-      run: |
-        cd .\VndbSharp
-        dir
-        dotnet pack -c Release -o out
-    - name: Push generated package to GitHub registry
-      run: |
-        cd .\VndbSharp
-        dir
-        nuget push .\out\*.nupkg -Source "GPR" -SkipDuplicate
+      # Publish
+      - name: publish on version change
+        id: publish_nuget
+        uses: rohith/publish-nuget@v2
+        with:
+          # Filepath of the project to be packaged, relative to root of repository
+          PROJECT_FILE_PATH: VndbSharp/VndbSharp.csproj
+          TAG_COMMIT: false
+          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+          NUGET_SOURCE: https://api.nuget.org
+          INCLUDE_SYMBOLS: false
          
    
