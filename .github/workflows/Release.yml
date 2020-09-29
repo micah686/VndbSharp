@@ -25,13 +25,11 @@ jobs:
         mkdir ${{ github.workspace }}/build
         dotnet build VndbSharp/VndbSharp.csproj -c Release -o --output ${{ github.workspace }}/build
         dir
-    - name: Compress
-      uses: TonyBogdanov/zip@1.0
-      with:
-        args: zip -qq -r ${{ github.workspace }}/build/archive.zip ${{ github.workspace }}/build
     - name: Cli
       run: |
+        Compress-Archive -Path ${{ github.workspace }}/build -DestinationPath ${{ github.workspace }}/build/archive.zip
         dir ${{ github.workspace }}/build
+      shell: powershell
     - name: Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
