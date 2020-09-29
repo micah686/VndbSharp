@@ -2,13 +2,13 @@ name: Publish VndbSharp Packages
 
 on:
   push:
-    branches: [ gha ]
-  pull_request:
-    branches: [ gha ]
+    tags:
+      - '*'
 
 
 jobs:
   build:
+    name: Publish VndbSharp
     runs-on: windows-latest
     steps:
 
