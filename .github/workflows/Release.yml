@@ -25,12 +25,10 @@ jobs:
         mkdir ${{ github.workspace }}/build
         dotnet build VndbSharp/VndbSharp.csproj -c Release -o --output ${{ github.workspace }}/build
         dir
-    - name: Archive Release
-      uses: thedoctor0/zip-release@master
+    - name: Compress
+      uses: TonyBogdanov/zip@1.0
       with:
-        filename: 'release.zip'
-        exclusions: '*.nupkg'
-        directory: ${{ github.workspace }}/build
+        args: zip -qq -r ${{ github.workspace }}/build/archive.zip ${{ github.workspace }}/build
     - name: Cli
       run: |
         dir ${{ github.workspace }}/build
