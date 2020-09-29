@@ -23,24 +23,24 @@ jobs:
         mkdir ${{ github.workspace }}/build
         dotnet build VndbSharp/VndbSharp.csproj -c Release -o --output ${{ github.workspace }}/build
         dir ${{ github.workspace }}/build
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          VndbSharp
+        draft: false
+        prerelease: false
+       
+    
     - name: Install NuGet client
       uses: warrenbuckley/Setup-Nuget@v1
 
     - name: Push with dotnet
       run: dotnet nuget push ${{ github.workspace }}\build\*.nupkg --skip-duplicate --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
    
-  #  - name: Push with dotnet2
-  #    run: dotnet nuget push ${{ github.workspace }}\build\*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json 
-
-  #  - name: Push with nuget
-  #    run: |
-  #      nuget setApiKey ${{secrets.NUGET_API_KEY}}
-  #      nuget push ${{ github.workspace }}\build\*.nupkg -Source https://api.nuget.org/v3/index.json
-      
-  #  - name: Publish to NuGet
-  #    uses: brandedoutcast/publish-nuget@v2
-  #    with:
-  #      PROJECT_FILE_PATH: VndbSharp/VndbSharp.csproj
-  #      VERSION_REGEX: '^\s*<PackageVersion>(.*)<\/PackageVersion>\s*$'
-  #      TAG_FORMAT: '*'
-  #      NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+ 
