@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
 	<PropertyGroup Label="Configuration">
 		<DocumentationFile>bin\Debug\netstandard1.3\VndbSharp.xml</DocumentationFile>
 	</PropertyGroup>
@@ -7,9 +7,10 @@
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Version>1.1.0</Version>
 		<Description>A .Net Library to communicate with the Vndb API</Description>
-		<RepositoryUrl>https://github.com/Nikey646/VndbSharp</RepositoryUrl>
-		<PackageProjectUrl>https://github.com/Nikey646/VndbSharp</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/micah686/VndbSharp</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/micah686/VndbSharp</PackageProjectUrl>
 		<PackageLicenseUrl>https://github.com/Nikey646/VndbSharp/blob/master/LICENSE</PackageLicenseUrl>
+		<PackageId>VndbSharp.micah686</PackageId>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<DefineConstants>TRACE;DEBUG</DefineConstants>
