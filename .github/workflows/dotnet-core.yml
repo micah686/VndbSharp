@@ -1,0 +1,17 @@
+name: .NET Core
+
+on:
+  push:
+    tags: 
+      - '*'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: test
+      run: |
+        echo "hello world
