@@ -5,48 +5,30 @@ on:
     branches: [ gha ]
   pull_request:
     branches: [ gha ]
-  
-
+    
 jobs:
   deploy:
+    name: Build VndbSharp
     runs-on: windows-latest
     steps:
-
-    - uses: actions/checkout@v1
-
+    - uses: actions/checkout@v2
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 2.2.109
+        dotnet-version: 3.1.301
     - uses: actions/cache@v2
       with:
         path: ~/.nuget/packages
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
         restore-keys: |
             ${{ runner.os }}-nuget-  
-    - name: dotnet build
+    - name: Install dependencies
+      run: dotnet restore    
+    - name: Build VndbSharp
       run: |
         mkdir ${{ github.workspace }}/build
-        dotnet build VndbSharp/VndbSharp.csproj -c Release -o --output ${{ github.workspace }}/build
-        dir ${{ github.workspace }}/build
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        body: |
-          Changes in this Release
-          - First Change
-          - Second Change
-        draft: false
-        prerelease: false
+        dotnet build VndbSharp/VndbSharp.csproj -c Release -o --output "${{ github.workspace }}/build"
     - name: Install NuGet client
       uses: warrenbuckley/Setup-Nuget@v1
-
     - name: Push with dotnet
-      run: dotnet nuget push ${{ github.workspace }}\build\*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
-   
- 
+      run: dotnet nuget push .${{ github.workspace }}\build\*.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.NUGET_API_KEY }
