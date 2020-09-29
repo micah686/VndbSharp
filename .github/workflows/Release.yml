@@ -13,7 +13,6 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NUGET_FEED: https://api.nuget.org/v3/index.json
   NUGET_KEY: ${{secrets.NUGET_API_KEY}}
-  LIB_DIR: .\VndbSharp
 
 jobs:
   build:
@@ -28,7 +27,8 @@ jobs:
         dotnet-version: 2.2.109
     - name: dotnet build
       run: |
-        cd ${{ env.somevar }}
+        cd .\VndbSharp
+        dir
         dotnet build --configuration Release
 
     - name: Install NuGet client
@@ -39,11 +39,13 @@ jobs:
 
     - name: Pack
       run: |
-        cd ${{ env.somevar }}
+        cd .\VndbSharp
+        dir
         dotnet pack -c Release -o out
     - name: Push generated package to GitHub registry
       run: |
-        cd ${{ env.somevar }}
+        cd .\VndbSharp
+        dir
         nuget push .\out\*.nupkg -Source "GPR" -SkipDuplicate
          
    
