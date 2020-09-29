@@ -37,8 +37,8 @@ jobs:
    # - name: Push with dotnet
    #   run: dotnet nuget push ${{ github.workspace }}\build\*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
    
-    - name: Push with dotnet2
-      run: dotnet nuget push ${{ github.workspace }}\build\*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json 
+  #  - name: Push with dotnet2
+  #    run: dotnet nuget push ${{ github.workspace }}\build\*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json 
 
     - name: Push with nuget
       run: |
