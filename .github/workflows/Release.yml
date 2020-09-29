@@ -6,18 +6,10 @@ on:
   pull_request:
     branches: [ gha ]
   
-env:
-  PROJECT_NAME: VndbSharp
-  GITHUB_FEED: https://nuget.pkg.github.com/micah686/index.json
-  GITHUB_USER: micah686
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NUGET_FEED: https://api.nuget.org/v3/index.json
-  NUGET_KEY: ${{secrets.NUGET_API_KEY}}
 
 jobs:
-  build:
+  deploy:
     runs-on: windows-latest
-    continue-on-error: true
     steps:
 
     - uses: actions/checkout@v1
@@ -26,29 +18,35 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 2.2.109
+    - uses: actions/cache@v2
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+            ${{ runner.os }}-nuget-  
     - name: dotnet build
       run: |
         mkdir ${{ github.workspace }}/build
         dotnet build VndbSharp/VndbSharp.csproj -c Release -o --output ${{ github.workspace }}/build
         dir ${{ github.workspace }}/build
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          Changes in this Release
+          - First Change
+          - Second Change
+        draft: false
+        prerelease: false
     - name: Install NuGet client
       uses: warrenbuckley/Setup-Nuget@v1
 
     - name: Push with dotnet
-      run: dotnet nuget push ${{ github.workspace }}\build\*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+      run: dotnet nuget push ${{ github.workspace }}\build\*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
    
-  #  - name: Push with dotnet2
-  #    run: dotnet nuget push ${{ github.workspace }}\build\*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json 
-
-  #  - name: Push with nuget
-  #    run: |
-  #      nuget setApiKey ${{secrets.NUGET_API_KEY}}
-  #      nuget push ${{ github.workspace }}\build\*.nupkg -Source https://api.nuget.org/v3/index.json
-      
-    - name: Publish to NuGet
-      uses: brandedoutcast/publish-nuget@v2
-      with:
-        PROJECT_FILE_PATH: VndbSharp/VndbSharp.csproj
-        VERSION_REGEX: '^\s*<PackageVersion>(.*)<\/PackageVersion>\s*$'
-        TAG_FORMAT: '*'
-        NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+ 
