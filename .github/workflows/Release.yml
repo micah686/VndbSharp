@@ -29,20 +29,20 @@ jobs:
     - name: dotnet build
       run: |
         dotnet build VndbSharp/VndbSharp.csproj -c Release -o --output nuget-packages --no-build
-        dir VndbSharp/nuget-packages
+        dir ./VndbSharp/nuget-packages
     - name: Install NuGet client
       uses: warrenbuckley/Setup-Nuget@v1
 
     - name: Push with dotnet
-      run: dotnet nuget push VndbSharp/nuget-packages/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+      run: dotnet nuget push ./VndbSharp/nuget-packages/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
    
     - name: Push with dotnet2
-      run: dotnet nuget push VndbSharp/nuget-packages/*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json 
+      run: dotnet nuget push ./VndbSharp/nuget-packages/*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json 
 
     - name: Push with nuget
       run: |
         nuget ${{secrets.NUGET_API_KEY}}
-        nuget push VndbSharp/nuget-packages/*.nupkg -Source https://api.nuget.org/v3/index.json
+        nuget push ./VndbSharp/nuget-packages/*.nupkg -Source https://api.nuget.org/v3/index.json
       
     - name: Publish to NuGet
       uses: brandedoutcast/publish-nuget@v2
