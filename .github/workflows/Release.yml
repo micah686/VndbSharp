@@ -2,13 +2,13 @@ name: Publish VndbSharp Packages
 
 on:
   push:
-    tags:
-      - '*'
+    branches: [ gha ]
+  pull_request:
+    branches: [ gha ]
 
 
 jobs:
   build:
-    name: Publish VndbSharp
     runs-on: windows-latest
     steps:
 
@@ -42,5 +42,3 @@ jobs:
 
     - name: Push with dotnet
       run: dotnet nuget push ${{ github.workspace }}\build\*.nupkg --skip-duplicate --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
-   
- 
