@@ -1,5 +1,5 @@
 # VndbSharp
-A C# [Vndb](https://vndb.org/) API Library. #OriginalNamingScheme
+A C# [Vndb](https://vndb.org/) API Library. 
 
 VndbSharp is a C# library for the Visual Novel Database API
   - Supports TLS (Secure Connections)
