@@ -17,6 +17,7 @@ env:
 jobs:
   build:
     runs-on: windows-latest
+    continue-on-error: true
     steps:
 
     - uses: actions/checkout@v1
@@ -25,29 +26,28 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 2.2.109
-   # - name: dotnet build
-    #  run: |
-    #    cd .\VndbSharp
-    #    dir
-     #   dotnet build --configuration Release
-   # - name: Install NuGet client
-    #  uses: warrenbuckley/Setup-Nuget@v1
-
-   # - name: Add private GitHub registry to NuGet
-   #   run: nuget sources add -name "GPR" -Source https://nuget.pkg.github.com/micah686/index.json -Username micah686 -Password ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Pack
+    - name: dotnet build
       run: |
-        cd .\VndbSharp
-        dir
-        dotnet pack -c Release -o out
-   # - name: Push generated package to GitHub registry
-   #   run: |
-   #     cd .\VndbSharp
-    #    dir
-    #    nuget push .\out\*.nupkg -Source "GPR" -SkipDuplicate
-    - name: Push
+        dotnet build VndbSharp/VndbSharp.csproj -c Release -o --output nuget-packages --no-build
+        dir VndbSharp/nuget-packages
+    - name: Install NuGet client
+      uses: warrenbuckley/Setup-Nuget@v1
+
+    - name: Push with dotnet
+      run: dotnet nuget push VndbSharp/nuget-packages/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+   
+    - name: Push with dotnet2
+      run: dotnet nuget push VndbSharp/nuget-packages/*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json 
+
+    - name: Push with nuget
       run: |
-        cd .\VndbSharp\out
-        dir
-        dotnet nuget push *.nupkg --api-key ${{secrets.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json
+        nuget ${{secrets.NUGET_API_KEY}}
+        nuget push VndbSharp/nuget-packages/*.nupkg -Source https://api.nuget.org/v3/index.json
+      
+    - name: Publish to NuGet
+      uses: brandedoutcast/publish-nuget@v2
+      with:
+        PROJECT_FILE_PATH: VndbSharp/VndbSharp.csproj
+        VERSION_REGEX: '^\s*<PackageVersion>(.*)<\/PackageVersion>\s*$'
+        TAG_FORMAT: '*'
+        NUGET_KEY: ${{secrets.NUGET_API_KEY}}
