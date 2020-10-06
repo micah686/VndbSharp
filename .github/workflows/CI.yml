@@ -23,6 +23,7 @@ jobs:
         restore-keys: |
             ${{ runner.os }}-nuget-  
     - name: Install dependencies
+      if: steps.nuget-packages.outputs.cache-hit != 'true'
       run: dotnet restore
     - name: Build VndbSharp
       run: dotnet pack VndbSharp/VndbSharp.csproj --configuration Release --no-restore    
