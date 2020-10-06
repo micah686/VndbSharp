@@ -18,7 +18,9 @@ jobs:
     - uses: actions/cache@v2
       id: nuget-packages
       with:
-        path: ~/.nuget/packages
+        path: 
+          ~/.nuget/packages
+          ${{ github.workspace }}/VndbSharp/obj/project.assets.json
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
         restore-keys: |
             ${{ runner.os }}-nuget-  
